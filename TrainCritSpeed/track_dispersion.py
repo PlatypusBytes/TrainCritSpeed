@@ -87,9 +87,10 @@ class BallastedTrack(TrackDispersionAbc):
         Initialize the ballasted track model with the given parameters.
 
         Args:
-            params: Track parameters.
-            wave_number: Initial wave number.
-            omega: Angular frequency array.
+            params (BallasTrackParameters): Track parameters.
+            omega (npt.NDArray[np.float64]): Angular frequency array.
+            initial_wave_number (float): Initial wave number. Default is 1e-3.
+            end_wave_number (float): End wave number. Default is 1e3.
         """
         self.parameters = params
 
@@ -117,8 +118,8 @@ class BallastedTrack(TrackDispersionAbc):
         Calculate the determinant of the stiffness matrix for the given wave number.
 
         Args:
-            wave_number: Wavenumber to evaluate.
-            omega: Angular frequency
+            wave_number (float): Wavenumber to evaluate.
+            omega (float): Angular frequency
 
         Returns:
             float: Determinant of the stiffness matrix.
@@ -143,7 +144,8 @@ class BallastedTrack(TrackDispersionAbc):
 
 
     def track_dispersion(self):
-        """Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
+        """
+        Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
 
         Returns:
             float: Wave number solution.
@@ -151,9 +153,8 @@ class BallastedTrack(TrackDispersionAbc):
         Raises:
             ValueError: If the solver fails to converge to a solution.
         """
-        # Use scipy's root finding algorithm to find the wavenumber
-        # that makes the determinant zero
 
+        # Root finding algorithm to find the wavenumber that makes the determinant zero
         for i, om in enumerate(self.omega):
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
@@ -173,15 +174,16 @@ class SlabTrack(TrackDispersionAbc):
 
     Based on the work of Mezher et al. (2016). Railway critical velocity - Analytical prediction and analysis.
     """
-    def __init__(self, params: BallastTrackParameters, omega: npt.NDArray[np.float64],
+    def __init__(self, params: SlabTrackParameters, omega: npt.NDArray[np.float64],
                  initial_wave_number: float = 1e-3, end_wave_number: float = 1e3):
         """
         Initialize the slab track model with the given parameters.
 
         Args:
-            params: Track parameters.
-            wave_number: Initial wave number.
-            omega: Angular frequency array.
+            params (BallastTrackParameters): Track parameters.
+            omega (npt.NDArray[np.float64]): Angular frequency array.
+            initial_wave_number (float): Initial wave number. Default is 1e-3.
+            end_wave_number (float): End wave number. Default is 1e3.
         """
         self.parameters = params
 
@@ -206,8 +208,8 @@ class SlabTrack(TrackDispersionAbc):
         Calculate the determinant of the stiffness matrix for the given wave number.
 
         Args:
-            wave_number: Wavenumber to evaluate.
-            omega: Angular frequency
+            wave_number (float): Wavenumber to evaluate.
+            omega (float): Angular frequency
 
         Returns:
             float: Determinant of the stiffness matrix.
@@ -226,7 +228,8 @@ class SlabTrack(TrackDispersionAbc):
 
 
     def track_dispersion(self):
-        """Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
+        """
+        Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
 
         Returns:
             float: Wave number solution.
@@ -234,9 +237,8 @@ class SlabTrack(TrackDispersionAbc):
         Raises:
             ValueError: If the solver fails to converge to a solution.
         """
-        # Use scipy's root finding algorithm to find the wavenumber
-        # that makes the determinant zero
 
+        # Root finding algorithm to find the wavenumber that makes the determinant zero
         for i, om in enumerate(self.omega):
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
