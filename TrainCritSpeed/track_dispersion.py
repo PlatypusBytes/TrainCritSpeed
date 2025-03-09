@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List
 import numpy as np
 import numpy.typing as npt
 from scipy import optimize
