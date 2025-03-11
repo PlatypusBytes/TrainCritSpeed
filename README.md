@@ -7,15 +7,10 @@ The dispersion curve for the layered soil is based on the Fast Delta Matrix meth
 
 ## Installation
 
+To install the TrainCritSpeed you can use pip:
+
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/TrainCritSpeed.git
-
-# Navigate to the project directory
-cd TrainCritSpeed
-
-# Install the package
-pip install -r requirements.txt
+pip install git+https://github.com/PlatypusBytes/TrainCritSpeed
 ```
 
 ## Usage Examples
