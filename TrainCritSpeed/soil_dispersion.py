@@ -112,78 +112,73 @@ class SoilDispersion:
         Returns:
             float: Dispersion value.
         """
-
         wave_number = omega / c  # wavenumber
+        num_layers = len(layers)
 
-        t = np.zeros(len(layers))
-        mu = np.zeros(len(layers))
-        alpha = np.zeros(len(layers))
-        beta = np.zeros(len(layers))
-        rho = np.zeros(len(layers))
-        thickness = np.zeros(len(layers))
-        gamma = np.zeros(len(layers))
+        # Pre-compute values for the first layer
+        beta0 = layers[0].c_s
+        t_value = 2 - c**2 / beta0**2
+        mu0 = layers[0].density * beta0**2
 
-        for i, lay in enumerate(layers):
-            thickness[i] = lay.thickness
-            alpha[i] = lay.c_p
-            beta[i] = lay.c_s
-            rho[i] = lay.density
-            t[i] = (c - c**2 / beta[i]**2)
-            mu[i] = rho[i] * beta[i]**2
-            gamma[i] = (beta[i] / c)**2
+        # Initialize X1
+        X1 = mu0**2 * np.array([2 * t_value, -t_value**2, 0, 0, -4])
 
-        t = 2 - c ** 2 / beta[0] ** 2
+        # Compute terms for half-space (last layer)
+        _, _, _, _, r_h, s_h = SoilDispersion.__compute_terms(
+            c, wave_number, layers[-1].thickness, layers[-1].c_p, layers[-1].c_s
+            )
 
-        # initialise
-        X1 = mu[0] ** 2 * np.array([2 * t, -t**2, 0, 0, -4])
+        # Process intermediate layers
+        for i in range(num_layers - 1):
+            current_layer = layers[i]
+            next_layer = layers[i + 1]
 
-        # terms for half-space
-        _, _, _, _, r_h, s_h = SoilDispersion.__compute_terms(c, wave_number, thickness[-1], alpha[-1], beta[-1])
+            # Calculate layer properties directly when needed
+            gamma = (current_layer.c_s / c)**2
+            gamma_next = (next_layer.c_s / c)**2
 
+            C_alpha, S_alpha, C_beta, S_beta, r, s = SoilDispersion.__compute_terms(
+                c, wave_number, current_layer.thickness, current_layer.c_p, current_layer.c_s
+            )
 
-        for i, lay in enumerate(layers[:-1]):
-
-            C_alpha, S_alpha, C_beta, S_beta, r, s = SoilDispersion.__compute_terms(c, wave_number, thickness[i], alpha[i], beta[i])
-
-            epsilon = rho[i+1] / rho[i]
-            eta = 2 * (gamma[i] - epsilon * gamma[i+1])
+            epsilon = next_layer.density / current_layer.density
+            eta = 2 * (gamma - epsilon * gamma_next)
 
             a = epsilon + eta
             a_prime = a - 1
             b = 1 - eta
             b_prime = b - 1
 
-            x1 = X1[0]
-            x2 = X1[1]
-            x3 = X1[2]
-            x4 = X1[3]
-            x5 = X1[4]
+            # Extract X1 components
+            x1, x2, x3, x4, x5 = X1
 
+            # Calculate intermediate values
             p1 = C_beta * x2 + s * S_beta * x3
             p2 = C_beta * x4 + s * S_beta * x5
             p3 = 1 / s * S_beta * x2 + C_beta * x3
             p4 = 1 / s * S_beta * x4 + C_beta * x5
 
             q1 = C_alpha * p1 - r * S_alpha * p2
-            q2 = - 1 / r * S_alpha * p3 + C_alpha * p4
+            q2 = -1 / r * S_alpha * p3 + C_alpha * p4
             q3 = C_alpha * p3 - r * S_alpha * p4
-            q4 = - 1 / r * S_alpha * p1 + C_alpha * p2
+            q4 = -1 / r * S_alpha * p1 + C_alpha * p2
 
             y1 = a_prime * x1 + a * q1
             y2 = a * x1 + a_prime * q2
             z1 = b * x1 + b_prime * q1
             z2 = b_prime * x1 + b * q2
 
-            x_hat_1 = b_prime * y1 + b * y2
-            x_hat_2 = a * y1 + a_prime * y2
-            x_hat_3 = epsilon * q3
-            x_hat_4 = epsilon * q4
-            x_hat_5 = b_prime * z1 + b * z2
-            # x_hat_6 = a * z1 + a_prime * z2 == x_hat_1
+            # Update X1 for next iteration
+            X1 = np.array([
+                b_prime * y1 + b * y2,        # x_hat_1
+                a * y1 + a_prime * y2,        # x_hat_2
+                epsilon * q3,                 # x_hat_3
+                epsilon * q4,                 # x_hat_4
+                b_prime * z1 + b * z2         # x_hat_5
+            ])
 
-            X1 = np.array([x_hat_1, x_hat_2, x_hat_3, x_hat_4, x_hat_5])
-
-        D = x_hat_2 + s_h * x_hat_3 - r_h * (x_hat_4 + s_h * x_hat_5)
+        # Calculate final determinant
+        D = X1[1] + s_h * X1[2] - r_h * (X1[3] + s_h * X1[4])
 
         return D.real
 
