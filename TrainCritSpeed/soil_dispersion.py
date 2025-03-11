@@ -25,14 +25,18 @@ class Layer:
     young_modulus: float
     poisson_ratio: float
     thickness: float
+    shear_modulus: float = None
+    c_s: float = None
+    c_p: float = None
 
-    # compute the shear and compression wave velocities
-    shear_modulus = young_modulus / (2 * (1 + poisson_ratio))
-    p_modulus = young_modulus / (1 + poisson_ratio) / (1 - 2 * poisson_ratio)
-    # shear wave velocity
-    c_s = np.sqrt(shear_modulus / density)
-    # compression wave velocity
-    c_p = np.sqrt(p_modulus / density)
+    def __post_init__(self):
+        """
+        Compute the shear and compression wave velocities.
+        """
+        shear_modulus = self.young_modulus / (2 * (1 + self.poisson_ratio))
+        p_modulus = self.young_modulus * (1 - self.poisson_ratio) / ((1 + self.poisson_ratio) * (1 - 2 * self.poisson_ratio))
+        self.c_s = np.sqrt(shear_modulus / self.density)
+        self.c_p = np.sqrt(p_modulus / self.density)
 
 
 class SoilDispersion:
@@ -46,43 +50,70 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray):
+    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray, resolution=10):
+        """
+        Initialize the soil dispersion model.
 
+        Args:
+            soil_layers (List[Layer]): List of soil layers.
+            omegas (np.ndarray): Angular frequencies.
+            resolution (int): Resolution of the phase velocity search space.
+        """
         for layer in soil_layers:
             if not isinstance(layer, Layer):
                 raise TypeError("All layers must be of type Layer.")
         self.soil_layers = soil_layers
         self.omega = omegas
-        self.phase_valocity = np.zeros(len(omegas))
+        self.phase_velocity = np.zeros(len(omegas))
+        self.resolution = resolution
         # define minimum and maximum values for the phase velocity iterative search
         self.min_c = 0.9 * np.min([layer.c_s for layer in soil_layers])
         self.max_c = 1.1 * np.max([layer.c_s for layer in soil_layers])
 
 
     def soil_dispersion(self):
+        """
+        Compute the dispersion of the soil layers.
+        """
 
-        c_list = np.linspace(self.min_c, self.max_c, int((self.max_c - self.min_c) * 10 + 1))
+        # resample the phase velocity search space
+        # the solution involved very large numbers, so the space needs to have high resolution
+        c_list = np.linspace(self.min_c, self.max_c, int((self.max_c - self.min_c) * self.resolution + 1))
 
         for j, omega in enumerate(tqdm(self.omega)):
-            D_aux = [self.__compute_dispersion_fastdelta(c, omega, self.soil_layers) for c in c_list]
-            # find the fist sign change
-            idx = np.where(np.diff(np.sign(D_aux)))[0]
-            if len(idx) == 0:
-                raise ValueError("Not possible to find the root of the dispersion function D(c, wave number).")
 
+            # Find the first sign change to bracket the root
+            d_1 = self.__compute_dispersion_fastdelta(c_list[0], omega, self.soil_layers)
+            for i in range(len(c_list) - 1):
+                d_2 = self.__compute_dispersion_fastdelta(c_list[i + 1], omega, self.soil_layers)
+                if d_1 * d_2 < 0:  # Sign change detected
+                    root_interval = (c_list[i], c_list[i + 1])
+                    break
+                d_1 = d_2
+
+            # find the root within the bracket root
             solution = optimize.root_scalar(self.__compute_dispersion_fastdelta,
                                             args=(omega, self.soil_layers),
-                                            bracket=[c_list[idx[0]], c_list[idx[0]+1]],
+                                            bracket=root_interval,
                                             method='brentq')
-            self.phase_valocity[j] = solution.root
 
+            self.phase_velocity[j] = solution.root
 
+    @staticmethod
+    def __compute_dispersion_fastdelta(c: float, omega: float, layers: List[Layer]):
+        """
+        Compute the dispersion of the soil layers using the Fast Delta Matrix method.
 
-    def __compute_dispersion_fastdelta(self, c, omega, layers):
+        Args:
+            c (float): Phase velocity.
+            omega (float): Angular frequency.
+            layers (List[Layer]): List of soil layers.
 
-        # wavelength = (2 * np.pi * c) / omega
-        k = omega / c  # wavenumber
-        # k = 2 * np.pi / lambda_val
+        Returns:
+            float: Dispersion value.
+        """
+
+        wave_number = omega / c  # wavenumber
 
         t = np.zeros(len(layers))
         mu = np.zeros(len(layers))
@@ -93,10 +124,10 @@ class SoilDispersion:
         gamma = np.zeros(len(layers))
 
         for i, lay in enumerate(layers):
-            thickness[i] = lay['d']
-            alpha[i] = lay['alpha']
-            beta[i] = lay['beta']
-            rho[i] = lay['rho']
+            thickness[i] = lay.thickness
+            alpha[i] = lay.c_p
+            beta[i] = lay.c_s
+            rho[i] = lay.density
             t[i] = (c - c**2 / beta[i]**2)
             mu[i] = rho[i] * beta[i]**2
             gamma[i] = (beta[i] / c)**2
@@ -107,12 +138,12 @@ class SoilDispersion:
         X1 = mu[0] ** 2 * np.array([2 * t, -t**2, 0, 0, -4])
 
         # terms for half-space
-        _, _, _, _, r_h, s_h = self.__compute_terms(c, k, thickness[-1], alpha[-1], beta[-1])
+        _, _, _, _, r_h, s_h = SoilDispersion.__compute_terms(c, wave_number, thickness[-1], alpha[-1], beta[-1])
 
 
         for i, lay in enumerate(layers[:-1]):
 
-            C_alpha, S_alpha, C_beta, S_beta, r, s = self.__compute_terms(c, k, thickness[i], alpha[i], beta[i])
+            C_alpha, S_alpha, C_beta, S_beta, r, s = SoilDispersion.__compute_terms(c, wave_number, thickness[i], alpha[i], beta[i])
 
             epsilon = rho[i+1] / rho[i]
             eta = 2 * (gamma[i] - epsilon * gamma[i+1])
@@ -159,7 +190,7 @@ class SoilDispersion:
     @staticmethod
     def __compute_terms(c, k, d, c_p, c_s):
         """
-        Compute C and S terms for either P or S waves
+        Compute C and S terms for P and S waves
 
         Args:
             c (float): Wave speed.
@@ -167,6 +198,9 @@ class SoilDispersion:
             d (float): Layer thickness.
             c_p (float): Compression wave speed.
             c_s (float): Shear wave speed.
+
+        Returns:
+            tuple: C_alpha, S_alpha, C_beta, S_beta, r, s
         """
         if c < c_p:
             r = np.sqrt(1 - c**2 / c_p**2)
