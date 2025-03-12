@@ -95,7 +95,7 @@ plt.show()
 
 ### Critical Speed Calculation
 
-Calculate the critical speed on a ballast track:
+Calculate the critical speed on a ballasted track:
 
 ```python
 import numpy as np
