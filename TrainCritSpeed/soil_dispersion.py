@@ -50,7 +50,7 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray, resolution=10):
+    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray, resolution=100):
         """
         Initialize the soil dispersion model.
 
