@@ -103,7 +103,7 @@ class BallastedTrack(TrackDispersionAbc):
         # frequency
         self.frequency = omega / (2 * np.pi)
 
-        # complex railpad stiffness
+        # railpad stiffness
         self.k_rail_pad = self.parameters.k_rail_pad # + 1j * omega * self.parameters.c_rail_pad
 
         # initial wave number for the root finding algorithm
@@ -193,7 +193,7 @@ class SlabTrack(TrackDispersionAbc):
         # frequency
         self.frequency = omega / (2 * np.pi)
 
-        # complex railpad stiffness
+        # railpad stiffness
         self.k_rail_pad = self.parameters.k_rail_pad # + 1j * omega * self.parameters.c_rail_pad
 
         # initial wave number for the root finding algorithm
