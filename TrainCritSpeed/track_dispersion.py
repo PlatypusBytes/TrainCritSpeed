@@ -128,10 +128,13 @@ class BallastedTrack(TrackDispersionAbc):
         tan_value = np.tan(omega * self.parameters.h_ballast / self.parameters.cp) * self.parameters.cp
         sin_value = np.sin(omega * self.parameters.h_ballast / self.parameters.cp) * self.parameters.cp
 
+        # railpad complex stiffness
+        rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
+
         # stiffness matrix
-        k11 = self.parameters.EI_rail * wave_number ** 4 + self.k_rail_pad - omega ** 2 * self.parameters.m_rail
-        k12 = self.k_rail_pad
-        k22 = self.k_rail_pad + (2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha) / tan_value - omega**2 * self.parameters.m_sleeper
+        k11 = self.parameters.EI_rail * wave_number ** 4 + rail_pad_complex_stiffness - omega ** 2 * self.parameters.m_rail
+        k12 = rail_pad_complex_stiffness
+        k22 = rail_pad_complex_stiffness + (2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha) / tan_value - omega**2 * self.parameters.m_sleeper
         k23 = -2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha / sin_value
         k33 = 2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha / tan_value + self.parameters.soil_stiffness
 
@@ -215,10 +218,13 @@ class SlabTrack(TrackDispersionAbc):
             float: Determinant of the stiffness matrix.
         """
 
+        # railpad complex stiffness
+        rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
+
         # stiffness matrix
-        k11 = self.parameters.EI_rail * wave_number ** 4 + self.k_rail_pad - omega ** 2 * self.parameters.m_rail
-        k12 = self.k_rail_pad
-        k22 = self.k_rail_pad + self.parameters.EI_slab * wave_number ** 4 - omega**2 * self.parameters.m_slab + self.parameters.soil_stiffness
+        k11 = self.parameters.EI_rail * wave_number ** 4 + rail_pad_complex_stiffness - omega ** 2 * self.parameters.m_rail
+        k12 = rail_pad_complex_stiffness
+        k22 = rail_pad_complex_stiffness + self.parameters.EI_slab * wave_number ** 4 - omega**2 * self.parameters.m_slab + self.parameters.soil_stiffness
 
         stiffness = np.array([[k11, k12],
                               [k12, k22],
