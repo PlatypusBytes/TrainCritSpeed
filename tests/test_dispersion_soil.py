@@ -13,8 +13,8 @@ def test_shear_modulus_and_wave_velocities():
     thickness = 10.0
 
     expected_cs = np.sqrt(young_modulus / (2 * (1 + poisson_ratio)) / density)
-    expected_cp = np.sqrt(young_modulus * (1 - poisson_ratio) /
-                            ((1 + poisson_ratio) * (1 - 2 * poisson_ratio)) / density)
+    expected_cp = np.sqrt(young_modulus * (1 - poisson_ratio) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio)) /
+                          density)
 
     layer = Layer(density, young_modulus, poisson_ratio, thickness)
 
@@ -59,7 +59,6 @@ def test_shear_modulus_and_wave_velocities():
     np.testing.assert_almost_equal(layer.c_p, expected_cp)
 
 
-
 def test_soil_dispersion():
     """
     Test the computation of the soil dispersion.
@@ -73,13 +72,12 @@ def test_soil_dispersion():
     E3, nu3 = compute_elastic_parameters(300, 600, 1900)
     E4, nu4 = compute_elastic_parameters(400, 800, 1900)
 
-
     soil_layers = [
         Layer(density=1900, young_modulus=E1, poisson_ratio=nu1, thickness=5),
         Layer(density=1900, young_modulus=E2, poisson_ratio=nu2, thickness=10),
         Layer(density=1900, young_modulus=E3, poisson_ratio=nu3, thickness=15),
         Layer(density=1900, young_modulus=E4, poisson_ratio=nu4, thickness=np.inf),
-                ]
+    ]
 
     omegas = np.linspace(1, 50 * 2 * np.pi, 100)
     dispersion = SoilDispersion(soil_layers, omegas)
