@@ -65,8 +65,9 @@ class TrackDispersionAbc(ABC):
     """
     Abstract class for track dispersion models.
     """
+
     @abstractmethod
-    def track_dispersion():
+    def track_dispersion(self):
         """Abstract method to calculate track dispersion.
 
         Raises:
@@ -81,8 +82,12 @@ class BallastedTrack(TrackDispersionAbc):
 
     Based on the work of Mezher et al. (2016). Railway critical velocity - Analytical prediction and analysis.
     """
-    def __init__(self, params: BallastTrackParameters, omega: npt.NDArray[np.float64],
-                 initial_wave_number: float = 1e-3, end_wave_number: float = 1e3):
+
+    def __init__(self,
+                 params: BallastTrackParameters,
+                 omega: npt.NDArray[np.float64],
+                 initial_wave_number: float = 1e-3,
+                 end_wave_number: float = 1e3):
         """
         Initialize the ballasted track model with the given parameters.
 
@@ -104,14 +109,13 @@ class BallastedTrack(TrackDispersionAbc):
         self.frequency = omega / (2 * np.pi)
 
         # railpad stiffness
-        self.k_rail_pad = self.parameters.k_rail_pad # + 1j * omega * self.parameters.c_rail_pad
+        self.k_rail_pad = self.parameters.k_rail_pad  # + 1j * omega * self.parameters.c_rail_pad
 
         # initial wave number for the root finding algorithm
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
         self.phase_velocity = np.zeros_like(omega)
-
 
     def __track_stiffness_matrix(self, wave_number: float, omega: float):
         """
@@ -132,19 +136,20 @@ class BallastedTrack(TrackDispersionAbc):
         rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
 
         # stiffness matrix
-        k11 = self.parameters.EI_rail * wave_number ** 4 + rail_pad_complex_stiffness - omega ** 2 * self.parameters.m_rail
+        k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
         k12 = rail_pad_complex_stiffness
-        k22 = rail_pad_complex_stiffness + (2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha) / tan_value - omega**2 * self.parameters.m_sleeper
+        k22 = rail_pad_complex_stiffness + (2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper *
+                                            self.parameters.alpha) / tan_value - omega**2 * self.parameters.m_sleeper
         k23 = -2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha / sin_value
         k33 = 2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha / tan_value + self.parameters.soil_stiffness
 
-        stiffness = np.array([[k11, k12, 0],
-                              [k12, k22, k23],
-                              [0, k23, k33],
-                              ])
+        stiffness = np.array([
+            [k11, k12, 0],
+            [k12, k22, k23],
+            [0, k23, k33],
+        ])
 
         return np.linalg.det(stiffness)
-
 
     def track_dispersion(self):
         """
@@ -162,8 +167,7 @@ class BallastedTrack(TrackDispersionAbc):
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
                                             bracket=[self._initial_wave_number, self._end_wave_number],
-                                            method='brentq'
-                                            )
+                                            method='brentq')
             if not solution.converged:
                 raise ValueError(f"Solver failed to converge for angular frequency {om}\n"
                                  "Please check the initial and end wavenumbers.")
@@ -177,8 +181,12 @@ class SlabTrack(TrackDispersionAbc):
 
     Based on the work of Mezher et al. (2016). Railway critical velocity - Analytical prediction and analysis.
     """
-    def __init__(self, params: SlabTrackParameters, omega: npt.NDArray[np.float64],
-                 initial_wave_number: float = 1e-3, end_wave_number: float = 1e3):
+
+    def __init__(self,
+                 params: SlabTrackParameters,
+                 omega: npt.NDArray[np.float64],
+                 initial_wave_number: float = 1e-3,
+                 end_wave_number: float = 1e3):
         """
         Initialize the slab track model with the given parameters.
 
@@ -197,14 +205,13 @@ class SlabTrack(TrackDispersionAbc):
         self.frequency = omega / (2 * np.pi)
 
         # railpad stiffness
-        self.k_rail_pad = self.parameters.k_rail_pad # + 1j * omega * self.parameters.c_rail_pad
+        self.k_rail_pad = self.parameters.k_rail_pad  # + 1j * omega * self.parameters.c_rail_pad
 
         # initial wave number for the root finding algorithm
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
         self.phase_velocity = np.zeros_like(omega)
-
 
     def __track_stiffness_matrix(self, wave_number: float, omega: float):
         """
@@ -222,16 +229,16 @@ class SlabTrack(TrackDispersionAbc):
         rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
 
         # stiffness matrix
-        k11 = self.parameters.EI_rail * wave_number ** 4 + rail_pad_complex_stiffness - omega ** 2 * self.parameters.m_rail
+        k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
         k12 = rail_pad_complex_stiffness
-        k22 = rail_pad_complex_stiffness + self.parameters.EI_slab * wave_number ** 4 - omega**2 * self.parameters.m_slab + self.parameters.soil_stiffness
+        k22 = rail_pad_complex_stiffness + self.parameters.EI_slab * wave_number**4 - omega**2 * self.parameters.m_slab + self.parameters.soil_stiffness
 
-        stiffness = np.array([[k11, k12],
-                              [k12, k22],
-                              ])
+        stiffness = np.array([
+            [k11, k12],
+            [k12, k22],
+        ])
 
         return np.linalg.det(stiffness)
-
 
     def track_dispersion(self):
         """
@@ -249,8 +256,7 @@ class SlabTrack(TrackDispersionAbc):
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
                                             bracket=[self._initial_wave_number, self._end_wave_number],
-                                            method='brentq'
-                                            )
+                                            method='brentq')
             if not solution.converged:
                 raise ValueError(f"Solver failed to converge for angular frequency {om}\n"
                                  "Please check the initial and end wavenumbers.")

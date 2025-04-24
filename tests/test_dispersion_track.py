@@ -9,18 +9,16 @@ def ballast_parameters():
     """
     Ballast track parameters
     """
-    params = BallastTrackParameters(
-        EI_rail=1.29e7,
-        m_rail=120,
-        k_rail_pad=5e8,
-        c_rail_pad=2.5e5,
-        m_sleeper=490,
-        E_ballast=130e6,
-        h_ballast=0.35,
-        width_sleeper=1.25,
-        soil_stiffness=0.0,
-        rho_ballast=1700
-    )
+    params = BallastTrackParameters(EI_rail=1.29e7,
+                                    m_rail=120,
+                                    k_rail_pad=5e8,
+                                    c_rail_pad=2.5e5,
+                                    m_sleeper=490,
+                                    E_ballast=130e6,
+                                    h_ballast=0.35,
+                                    width_sleeper=1.25,
+                                    soil_stiffness=0.0,
+                                    rho_ballast=1700)
     return params
 
 
@@ -30,13 +28,13 @@ def slab_parameters():
     Slab track parameters
     """
     params = SlabTrackParameters(
-        EI_rail = 1.29e7,
-        m_rail = 120,
-        k_rail_pad = 5e8,
-        c_rail_pad = 2.5e5,
-        EI_slab = 30e9 * (1.25 * 0.35 ** 3 / 12),
-        m_slab = 2500 * 1.25 * 0.35,
-        soil_stiffness = 0.0,
+        EI_rail=1.29e7,
+        m_rail=120,
+        k_rail_pad=5e8,
+        c_rail_pad=2.5e5,
+        EI_slab=30e9 * (1.25 * 0.35**3 / 12),
+        m_slab=2500 * 1.25 * 0.35,
+        soil_stiffness=0.0,
     )
     return params
 
