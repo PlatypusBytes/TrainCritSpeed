@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 import warnings
 
 import numpy as np
@@ -50,14 +50,14 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray, resolution=100):
+    def __init__(self, soil_layers: List[Layer], omegas: np.ndarray, step=0.01):
         """
         Initialize the soil dispersion model.
 
         Args:
             soil_layers (List[Layer]): List of soil layers.
             omegas (np.ndarray): Angular frequencies.
-            resolution (int): Resolution of the phase velocity search space.
+            step (float): Step size for the phase velocity search (Optional: default is 0.01).
         """
         for layer in soil_layers:
             if not isinstance(layer, Layer):
@@ -65,10 +65,10 @@ class SoilDispersion:
         self.soil_layers = soil_layers
         self.omega = omegas
         self.phase_velocity = np.zeros(len(omegas))
-        self.resolution = resolution
+        self.step = step
         # define minimum and maximum values for the phase velocity iterative search
-        self.min_c = 0.9 * np.min([layer.c_s for layer in soil_layers])
-        self.max_c = 1.1 * np.max([layer.c_s for layer in soil_layers])
+        self.min_c = 0.8 * np.min([layer.c_s for layer in soil_layers])
+        self.max_c = 1.2 * np.max([layer.c_s for layer in soil_layers])
 
 
     def soil_dispersion(self):
@@ -78,18 +78,21 @@ class SoilDispersion:
 
         # resample the phase velocity search space
         # the solution involved very large numbers, so the space needs to have high resolution
-        c_list = np.linspace(self.min_c, self.max_c, int((self.max_c - self.min_c) * self.resolution + 1))
+        c_list = np.arange(self.min_c, self.max_c + self.step, self.step)
 
         for j, omega in enumerate(tqdm(self.omega)):
-
             # Find the first sign change to bracket the root
             d_1 = self.__compute_dispersion_fastdelta(c_list[0], omega, self.soil_layers)
+            root_interval = None
             for i in range(len(c_list) - 1):
                 d_2 = self.__compute_dispersion_fastdelta(c_list[i + 1], omega, self.soil_layers)
                 if d_1 * d_2 < 0:  # Sign change detected
                     root_interval = (c_list[i], c_list[i + 1])
                     break
                 d_1 = d_2
+            if root_interval is None:
+                self.phase_velocity[j] = np.nan
+                continue
 
             # find the root within the bracket root
             solution = optimize.root_scalar(self.__compute_dispersion_fastdelta,
@@ -183,7 +186,7 @@ class SoilDispersion:
         return D.real
 
     @staticmethod
-    def __compute_terms(c, k, d, c_p, c_s):
+    def __compute_terms(c: float, k: float, d: float, c_p: float, c_s: float) -> Tuple[float, float, float, float, float, float]:
         """
         Compute C and S terms for P and S waves
 
@@ -201,13 +204,21 @@ class SoilDispersion:
             r = np.sqrt(1 - c**2 / c_p**2)
             C_alpha = np.cosh(k * r * d)
             S_alpha = np.sinh(k * r * d)
+        elif c == c_p:
+            r = 1e-200
+            C_alpha = np.cosh(k * r * d)
+            S_alpha = np.sinh(k * r * d)
         else:
-            r = np.sqrt(c**2 / c_s**2 - 1)
+            r = np.sqrt(c**2 / c_p**2 - 1)
             C_alpha = np.cos(k * r * d)
             S_alpha = 1j * np.sin(k * r * d)
 
         if c < c_s:
             s = np.sqrt(1 - c**2 / c_s**2)
+            C_beta = np.cosh(k * s * d)
+            S_beta = np.sinh(k * s * d)
+        elif c == c_s:
+            s = 1e-200
             C_beta = np.cosh(k * s * d)
             S_beta = np.sinh(k * s * d)
         else:
