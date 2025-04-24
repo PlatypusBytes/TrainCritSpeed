@@ -1,0 +1,16 @@
+repos:
+  - repo: local
+    hooks:
+      - id: yapf
+        name: yapf
+        language: python
+        entry: yapf
+        args: [-i]
+        types: [python]
+      - id: mypy
+        name: mypy
+        language: python
+        entry: mypy
+        files: "^TrainCritSpeed/"
+        args: [ --config-file, "pyproject.toml" ]
+        types: [python]
