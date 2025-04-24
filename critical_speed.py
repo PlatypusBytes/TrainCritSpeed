@@ -5,21 +5,18 @@ from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParamete
 from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 from TrainCritSpeed.critical_speed import CriticalSpeed
 
-
 omega = np.linspace(0.1, 250, 100)
 
-ballast_parameters = BallastTrackParameters(
-        EI_rail=1.29e7,
-        m_rail=120,
-        k_rail_pad=5e8,
-        c_rail_pad=2.5e5,
-        m_sleeper=490,
-        E_ballast=130e6,
-        h_ballast=0.35,
-        width_sleeper=1.25,
-        soil_stiffness=0.0,
-        rho_ballast=1700
-    )
+ballast_parameters = BallastTrackParameters(EI_rail=1.29e7,
+                                            m_rail=120,
+                                            k_rail_pad=5e8,
+                                            c_rail_pad=2.5e5,
+                                            m_sleeper=490,
+                                            E_ballast=130e6,
+                                            h_ballast=0.35,
+                                            width_sleeper=1.25,
+                                            soil_stiffness=0.0,
+                                            rho_ballast=1700)
 
 soil_layers = [
     Layer(density=1900, young_modulus=2.67e7, poisson_ratio=0.33, thickness=5),
