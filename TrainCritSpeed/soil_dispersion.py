@@ -83,10 +83,12 @@ class SoilDispersion:
 
         for j, omega in enumerate(tqdm(self.omega)):
             # Find the first sign change to bracket the root
-            d_1 = self.__compute_dispersion_fastdelta(c_list[0], omega, self.soil_layers)
+            d = self.__compute_dispersion_fastdelta(c_list, omega, self.soil_layers)
+            d_1 = d[0]
+
             root_interval = None
             for i in range(len(c_list) - 1):
-                d_2 = self.__compute_dispersion_fastdelta(c_list[i + 1], omega, self.soil_layers)
+                d_2 = d[i + 1]
                 if d_1 * d_2 < 0:  # Sign change detected
                     root_interval = (c_list[i], c_list[i + 1])
                     break
@@ -104,17 +106,18 @@ class SoilDispersion:
             self.phase_velocity[j] = solution.root
 
     @staticmethod
-    def __compute_dispersion_fastdelta(c: float, omega: float, layers: List[Layer]):
+    def __compute_dispersion_fastdelta(c: npt.NDArray[np.float64], omega: float,
+                                       layers: List[Layer]) -> npt.NDArray[np.float64]:
         """
         Compute the dispersion of the soil layers using the Fast Delta Matrix method.
 
         Args:
-            c (float): Phase velocity.
+            c (npt.NDArray[np.float64]): Phase velocity.
             omega (float): Angular frequency.
             layers (List[Layer]): List of soil layers.
 
         Returns:
-            float: Dispersion value.
+            npt.NDArray[np.float64]: Dispersion value.
         """
         wave_number = omega / c  # wavenumber
         num_layers = len(layers)
@@ -125,7 +128,11 @@ class SoilDispersion:
         mu0 = layers[0].density * beta0**2
 
         # Initialize X1
-        X1 = mu0**2 * np.array([2 * t_value, -t_value**2, 0, 0, -4])
+        X1 = mu0**2 * np.array(
+            [2 * t_value, -t_value**2,
+             np.zeros_like(t_value),
+             np.zeros_like(t_value),
+             np.ones_like(t_value) * -4])
 
         # Compute terms for half-space (last layer)
         _, _, _, _, r_h, s_h = SoilDispersion.__compute_terms(c, wave_number, layers[-1].thickness, layers[-1].c_p,
@@ -184,17 +191,19 @@ class SoilDispersion:
         # Calculate final determinant
         D = X1[1] + s_h * X1[2] - r_h * (X1[3] + s_h * X1[4])
 
-        return D.real
+        return np.asarray(D.real, dtype=np.float64)
 
     @staticmethod
-    def __compute_terms(c: float, k: float, d: float, c_p: float,
-                        c_s: float) -> Tuple[float, float, float, float, float, float]:
+    def __compute_terms(
+        c: npt.NDArray[np.float64], k: npt.NDArray[np.float64], d: float, c_p: float, c_s: float
+    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64],
+               npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Compute C and S terms for P and S waves
 
         Args:
-            c (float): Wave speed.
-            k (float): Wavenumber.
+            c (npt.NDArray[np.float64]): Wave speed.
+            k (npt.NDArray[np.float64]): Wavenumber.
             d (float): Layer thickness.
             c_p (float): Compression wave speed.
             c_s (float): Shear wave speed.
@@ -202,30 +211,17 @@ class SoilDispersion:
         Returns:
             tuple: C_alpha, S_alpha, C_beta, S_beta, r, s
         """
-        if c < c_p:
-            r = np.sqrt(1 - c**2 / c_p**2)
-            C_alpha = np.cosh(k * r * d)
-            S_alpha = np.sinh(k * r * d)
-        elif c == c_p:
-            r = 1e-200
-            C_alpha = np.cosh(k * r * d)
-            S_alpha = np.sinh(k * r * d)
-        else:
-            r = np.sqrt(c**2 / c_p**2 - 1)
-            C_alpha = np.cos(k * r * d)
-            S_alpha = 1j * np.sin(k * r * d)
 
-        if c < c_s:
-            s = np.sqrt(1 - c**2 / c_s**2)
-            C_beta = np.cosh(k * s * d)
-            S_beta = np.sinh(k * s * d)
-        elif c == c_s:
-            s = 1e-200
-            C_beta = np.cosh(k * s * d)
-            S_beta = np.sinh(k * s * d)
-        else:
-            s = np.sqrt(c**2 / c_s**2 - 1)
-            C_beta = np.cos(k * s * d)
-            S_beta = 1j * np.sin(k * s * d)
+        epsilon = 1e-200  # very small number to avoid division by zero
+
+        # P-wave terms
+        r = np.where(c < c_p, np.sqrt(1 - (c / c_p)**2), np.where(c == c_p, epsilon, np.sqrt((c / c_p)**2 - 1)))
+        C_alpha = np.where(c <= c_p, np.cosh(k * r * d), np.cos(k * r * d))
+        S_alpha = np.where(c < c_p, np.sinh(k * r * d), 1j * np.sin(k * r * d))
+
+        # S-wave terms
+        s = np.where(c < c_s, np.sqrt(1 - (c / c_s)**2), np.where(c == c_s, epsilon, np.sqrt((c / c_s)**2 - 1)))
+        C_beta = np.where(c <= c_s, np.cosh(k * s * d), np.cos(k * s * d))
+        S_beta = np.where(c < c_s, np.sinh(k * s * d), 1j * np.sin(k * s * d))
 
         return C_alpha, S_alpha, C_beta, S_beta, r, s
