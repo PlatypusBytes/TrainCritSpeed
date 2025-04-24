@@ -36,3 +36,8 @@ jobs:
         pip install .["testing"]
     - name: Test with pytest
       run: pytest tests
+    - name: Check code style with pre-commit
+      if: matrix.python == '3.12'
+      run: |
+        pip install pre-commit
+        pre-commit run --all-files
