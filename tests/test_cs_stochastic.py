@@ -9,6 +9,7 @@ from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 from TrainCritSpeed.critical_speed import CriticalSpeed
 
 def test_stochastic():
+    #regular layer inbetween to test whether the functionality of mixing regular layers didn't break
     soil_layers = [
         StochasticLayer(1900,100,3e7,5e6,0.33,0.05,5,0.2),
         StochasticLayer(1900,200,1e8,1e7,0.33,0.05,10,1),
@@ -16,13 +17,14 @@ def test_stochastic():
         StochasticLayer(1900,400,5e8,2e8,0.33,0.1,np.inf,0)
     ]
 
+    #setting seed on every layer to provide consistently testable results
     for layer in soil_layers:
         layer.rng = np.random.default_rng(2025)
 
 
     omega = np.linspace(0.1, 250, 100)
 
-    #replace with import from file
+
     ballast_parameters = BallastTrackParameters(EI_rail=1.29e7,
                                                 m_rail=120,
                                                 k_rail_pad=5e8,
@@ -39,6 +41,8 @@ def test_stochastic():
     dispersion = StochasticSoilDispersion(soil_layers, omega)
 
     cs = StochasticCriticalSpeed(omega, ballast, dispersion)
+
+    #run track dispersion only once because it's treated deterministically
     cs.track.track_dispersion()
 
 

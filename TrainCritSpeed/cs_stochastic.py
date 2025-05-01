@@ -58,18 +58,24 @@ class StochasticLayer(Layer):
         self.c_s = np.sqrt(shear_modulus / self.density)
         self.c_p = np.sqrt(p_modulus / self.density)
 
-        # check for the edge case that normal returns a negative value:
+        # check for the edge case that normal returns a negative value or poisson of/above 0.5:
         # this should be replaced with lognormal if it becomes more than an edge case
         if self.density<=0 or self.young_modulus<=0 or self.poisson_ratio<=0 or self.thickness<=0 or self.poisson_ratio>=0.5: 
             self.realise()
 
 class StochasticSoilDispersion(SoilDispersion):
+    """
+    Extension to the SoilDispersion class which adds a method to realise all stochastic soil layers held inside of it
+    """
     def realise(self):
         for soil in self.soil_layers:
             if isinstance(soil,StochasticLayer):
                 soil.realise()
 
 class StochasticCriticalSpeed(CriticalSpeed):
+    """
+    Extension to the CriticalSpeed class which changes the compute method to not calculate track dispersion every time
+    """
     def compute(self):
         """
         Compute the critical speed of a train on a track-soil system.

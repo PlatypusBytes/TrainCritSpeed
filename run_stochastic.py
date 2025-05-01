@@ -16,10 +16,6 @@ soil_layers = [
     StochasticLayer(1900,400,5e8,2e8,0.33,0.1,np.inf,0)
 ]
 
-for layer in soil_layers:
-    layer.rng = np.random.default_rng(2025)
-
-
 omega = np.linspace(0.1, 250, 100)
 
 #replace with import from file
@@ -41,9 +37,14 @@ dispersion = StochasticSoilDispersion(soil_layers, omega)
 cs = StochasticCriticalSpeed(omega, ballast, dispersion)
 cs.track.track_dispersion()
 
+speeds=[]
+frequencies=[]
 
-
-for k in range(2):
+for k in range(10):
     cs.soil.realise()
     cs.compute()
     print(f"Critical speed: {cs.critical_speed} m/s at a frequency of {cs.frequency}")
+    speeds.append(cs.critical_speed)
+    frequencies.append(cs.frequency)
+
+print(f"Mean critical speed: {np.mean(speeds)} m/s with a standard deviation of {np.std(speeds)} m/s")
