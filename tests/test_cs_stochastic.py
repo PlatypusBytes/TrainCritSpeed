@@ -1,12 +1,7 @@
 from TrainCritSpeed.cs_stochastic import StochasticCriticalSpeed, StochasticSoilDispersion, StochasticLayer
-from typing import List
 import numpy as np
-import matplotlib.pyplot as plt
-import numpy.typing as npt
-
 from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParameters
-from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
-from TrainCritSpeed.critical_speed import CriticalSpeed
+from TrainCritSpeed.soil_dispersion import Layer
 
 def test_stochastic():
     #regular layer inbetween to test whether the functionality of mixing regular layers didn't break

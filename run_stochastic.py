@@ -1,13 +1,7 @@
-from TrainCritSpeed.cs_stochastic import StochasticCriticalSpeed, StochasticSoilDispersion, StochasticLayer
-from typing import List
 import numpy as np
-import matplotlib.pyplot as plt
-import numpy.typing as npt
-
+from TrainCritSpeed.cs_stochastic import StochasticCriticalSpeed, StochasticSoilDispersion, StochasticLayer
 from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParameters
-from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
-from TrainCritSpeed.critical_speed import CriticalSpeed
-
+from TrainCritSpeed.soil_dispersion import Layer
 
 soil_layers = [
     StochasticLayer(1900,100,3e7,5e6,0.33,0.05,5,0.2),
