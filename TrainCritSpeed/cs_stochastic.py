@@ -2,6 +2,7 @@ import numpy as np
 from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 from TrainCritSpeed.critical_speed import CriticalSpeed
 
+
 class StochasticLayer(Layer):
     """
     Stochastic extension to the Layer class that holds mean/std values and 'realises itself' when requested,
@@ -17,23 +18,31 @@ class StochasticLayer(Layer):
         thicknessstd (float): Standard deviation of layer thickness [m].
     """
 
-    def __init__(self,densitymean:float,youngmean:float,poissonmean:float,thicknessmean:float,densitystd:float=0,youngstd:float=0,poissonstd:float=0,thicknessstd:float=0):
-        self.densitymean=densitymean
-        self.densitystd=densitystd
-        self.youngmean=youngmean
-        self.youngstd=youngstd
-        self.poissonmean=poissonmean
-        self.poissonstd=poissonstd
-        self.thicknessmean=thicknessmean
-        self.thicknessstd=thicknessstd
-        self.rng=np.random.default_rng()
+    def __init__(self,
+                 densitymean: float,
+                 youngmean: float,
+                 poissonmean: float,
+                 thicknessmean: float,
+                 densitystd: float = 0,
+                 youngstd: float = 0,
+                 poissonstd: float = 0,
+                 thicknessstd: float = 0):
+        self.densitymean = densitymean
+        self.densitystd = densitystd
+        self.youngmean = youngmean
+        self.youngstd = youngstd
+        self.poissonmean = poissonmean
+        self.poissonstd = poissonstd
+        self.thicknessmean = thicknessmean
+        self.thicknessstd = thicknessstd
+        self.rng = np.random.default_rng()
 
-        if densitystd<0 or youngstd<0 or poissonstd<0 or thicknessstd<0:
+        if densitystd < 0 or youngstd < 0 or poissonstd < 0 or thicknessstd < 0:
             raise ValueError("Initialisation of stochastic layer failed, a standard deviation can never be negative")
-        
+
         #initial realisation
         self.realise()
-    
+
     def realise(self):
         """
         Spits out a randomised layer using a normal distribution 
@@ -42,8 +51,6 @@ class StochasticLayer(Layer):
         self.young_modulus = self.rng.normal(self.youngmean, self.youngstd)
         self.poisson_ratio = self.rng.normal(self.poissonmean, self.poissonstd)
         self.thickness = self.rng.normal(self.thicknessmean, self.thicknessstd)
-
-        
         """
         Compute the shear and compression wave velocities.
         """
@@ -55,22 +62,26 @@ class StochasticLayer(Layer):
 
         # check for the edge case that normal returns a negative value or poisson of/above 0.5:
         # this should be replaced with lognormal if it becomes more than an edge case
-        if self.density<=0 or self.young_modulus<=0 or self.poisson_ratio<=0 or self.thickness<=0 or self.poisson_ratio>=0.5: 
+        if self.density <= 0 or self.young_modulus <= 0 or self.poisson_ratio <= 0 or self.thickness <= 0 or self.poisson_ratio >= 0.5:
             self.realise()
+
 
 class StochasticSoilDispersion(SoilDispersion):
     """
     Extension to the SoilDispersion class which adds a method to realise all stochastic soil layers held inside of it
     """
+
     def realise(self):
         for soil in self.soil_layers:
-            if isinstance(soil,StochasticLayer):
+            if isinstance(soil, StochasticLayer):
                 soil.realise()
+
 
 class StochasticCriticalSpeed(CriticalSpeed):
     """
     Extension to the CriticalSpeed class which changes the compute method to not calculate track dispersion every time
     """
+
     def compute(self):
         """
         Compute the critical speed of a train on a track-soil system.
@@ -80,5 +91,3 @@ class StochasticCriticalSpeed(CriticalSpeed):
         # intersection between track and soil dispersion curves
         self.frequency, self.critical_speed = self.intersection(self.omega, self.track.phase_velocity,
                                                                 self.soil.phase_velocity)
-
-

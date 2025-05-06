@@ -4,14 +4,31 @@ from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParamete
 from TrainCritSpeed.soil_dispersion import Layer
 
 soil_layers = [
-        StochasticLayer(densitymean=1900, youngmean=3e7, poissonmean=0.33,thicknessmean=5,
-                         densitystd=100, youngstd=5e6, poissonstd=0.05, thicknessstd=0.2),
-        StochasticLayer(densitymean=1900, youngmean=1e8, poissonmean=0.33,thicknessmean=10,
-                         densitystd=200, youngstd=1e7, poissonstd=0.05, thicknessstd=1),
-        Layer(density=1900, young_modulus=3e8, poisson_ratio=0.4, thickness=15),
-        StochasticLayer(densitymean=1900, youngmean=5e8, poissonmean=0.33,thicknessmean=np.inf,
-                         densitystd=400, youngstd=2e8, poissonstd=0.1)
-    ]
+    StochasticLayer(densitymean=1900,
+                    youngmean=3e7,
+                    poissonmean=0.33,
+                    thicknessmean=5,
+                    densitystd=100,
+                    youngstd=5e6,
+                    poissonstd=0.05,
+                    thicknessstd=0.2),
+    StochasticLayer(densitymean=1900,
+                    youngmean=1e8,
+                    poissonmean=0.33,
+                    thicknessmean=10,
+                    densitystd=200,
+                    youngstd=1e7,
+                    poissonstd=0.05,
+                    thicknessstd=1),
+    Layer(density=1900, young_modulus=3e8, poisson_ratio=0.4, thickness=15),
+    StochasticLayer(densitymean=1900,
+                    youngmean=5e8,
+                    poissonmean=0.33,
+                    thicknessmean=np.inf,
+                    densitystd=400,
+                    youngstd=2e8,
+                    poissonstd=0.1)
+]
 
 omega = np.linspace(0.1, 250, 100)
 
@@ -34,8 +51,8 @@ dispersion = StochasticSoilDispersion(soil_layers, omega)
 cs = StochasticCriticalSpeed(omega, ballast, dispersion)
 cs.track.track_dispersion()
 
-speeds=[]
-frequencies=[]
+speeds = []
+frequencies = []
 
 for k in range(10):
     cs.soil.realise()
