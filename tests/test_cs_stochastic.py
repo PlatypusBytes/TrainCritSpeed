@@ -6,10 +6,13 @@ from TrainCritSpeed.soil_dispersion import Layer
 def test_stochastic():
     #regular layer inbetween to test whether the functionality of mixing regular layers didn't break
     soil_layers = [
-        StochasticLayer(1900,100,3e7,5e6,0.33,0.05,5,0.2),
-        StochasticLayer(1900,200,1e8,1e7,0.33,0.05,10,1),
-        Layer(1900,3e8,0.4,15),
-        StochasticLayer(1900,400,5e8,2e8,0.33,0.1,np.inf,0)
+        StochasticLayer(densitymean=1900, youngmean=3e7, poissonmean=0.33,thicknessmean=5,
+                         densitystd=100, youngstd=5e6, poissonstd=0.05, thicknessstd=0.2),
+        StochasticLayer(densitymean=1900, youngmean=1e8, poissonmean=0.33,thicknessmean=10,
+                         densitystd=200, youngstd=1e7, poissonstd=0.05, thicknessstd=1),
+        Layer(density=1900, young_modulus=3e8, poisson_ratio=0.4, thickness=15),
+        StochasticLayer(densitymean=1900, youngmean=5e8, poissonmean=0.33,thicknessmean=np.inf,
+                         densitystd=400, youngstd=2e8, poissonstd=0.1)
     ]
 
     #setting seed on every layer to provide consistently testable results

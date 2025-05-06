@@ -17,7 +17,7 @@ class StochasticLayer(Layer):
         thicknessstd (float): Standard deviation of layer thickness [m].
     """
 
-    def __init__(self,densitymean:float,densitystd:float,youngmean:float,youngstd:float,poissonmean:float,poissonstd:float,thicknessmean:float,thicknessstd:float):
+    def __init__(self,densitymean:float,youngmean:float,poissonmean:float,thicknessmean:float,densitystd:float=0,youngstd:float=0,poissonstd:float=0,thicknessstd:float=0):
         self.densitymean=densitymean
         self.densitystd=densitystd
         self.youngmean=youngmean
