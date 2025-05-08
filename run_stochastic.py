@@ -4,30 +4,36 @@ from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParamete
 from TrainCritSpeed.soil_dispersion import Layer
 
 soil_layers = [
-    StochasticLayer(densitymean=1900,
-                    youngmean=3e7,
-                    poissonmean=0.33,
-                    thicknessmean=5,
-                    densitystd=100,
-                    youngstd=5e6,
-                    poissonstd=0.05,
-                    thicknessstd=0.2),
-    StochasticLayer(densitymean=1900,
-                    youngmean=1e8,
-                    poissonmean=0.33,
-                    thicknessmean=10,
-                    densitystd=200,
-                    youngstd=1e7,
-                    poissonstd=0.05,
-                    thicknessstd=1),
+    StochasticLayer(density_mean=1900,
+                    young_mean=3e7,
+                    poisson_mean=0.33,
+                    thickness_mean=5,
+                    density_std=100,
+                    young_std=5e6,
+                    poisson_std=0.05,
+                    thickness_std=0.2,
+                    distribution="lognormal",
+                    seed=123),
+    StochasticLayer(density_mean=1900,
+                    young_mean=1e8,
+                    poisson_mean=0.33,
+                    thickness_mean=10,
+                    density_std=200,
+                    young_std=1e7,
+                    poisson_std=0.05,
+                    thickness_std=1,
+                    distribution="lognormal",
+                    seed=123),
     Layer(density=1900, young_modulus=3e8, poisson_ratio=0.4, thickness=15),
-    StochasticLayer(densitymean=1900,
-                    youngmean=5e8,
-                    poissonmean=0.33,
-                    thicknessmean=np.inf,
-                    densitystd=400,
-                    youngstd=2e8,
-                    poissonstd=0.1)
+    StochasticLayer(density_mean=1900,
+                    young_mean=5e8,
+                    poisson_mean=0.33,
+                    thickness_mean=np.inf,
+                    density_std=400,
+                    young_std=2e8,
+                    poisson_std=0.1,
+                    distribution="lognormal",
+                    seed=123)
 ]
 
 omega = np.linspace(0.1, 250, 100)
@@ -55,10 +61,10 @@ speeds = []
 frequencies = []
 
 for k in range(10):
-    cs.soil.realise()
     cs.compute()
     print(f"Critical speed: {cs.critical_speed} m/s at a frequency of {cs.frequency}")
     speeds.append(cs.critical_speed)
     frequencies.append(cs.frequency)
+    cs.soil.realise()
 
 print(f"Mean critical speed: {np.mean(speeds)} m/s with a standard deviation of {np.std(speeds)} m/s")
