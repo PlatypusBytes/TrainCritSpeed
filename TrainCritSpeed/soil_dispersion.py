@@ -42,7 +42,7 @@ class Layer:
 
 
 class SoilDispersion:
-    """"
+    """
     Compute the dispersion of a soil layer.
 
     It is based on the Fast Delta Matrix method:
