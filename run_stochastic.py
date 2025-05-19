@@ -12,7 +12,7 @@ soil_layers = [
                     young_std=5e6,
                     poisson_std=0.05,
                     thickness_std=0.2,
-                    distribution="lognormal",
+                    distribution="normal",
                     seed=123),
     StochasticLayer(density_mean=1900,
                     young_mean=1e8,
@@ -22,7 +22,7 @@ soil_layers = [
                     young_std=1e7,
                     poisson_std=0.05,
                     thickness_std=1,
-                    distribution="lognormal",
+                    distribution="normal",
                     seed=123),
     Layer(density=1900, young_modulus=3e8, poisson_ratio=0.4, thickness=15),
     StochasticLayer(density_mean=1900,
@@ -32,7 +32,7 @@ soil_layers = [
                     density_std=400,
                     young_std=2e8,
                     poisson_std=0.1,
-                    distribution="lognormal",
+                    distribution="normal",
                     seed=123)
 ]
 
