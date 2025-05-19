@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import warnings
 import numpy as np
 import numpy.typing as npt
 from scipy import optimize
@@ -137,7 +138,7 @@ class BallastedTrack(TrackDispersionAbc):
 
         # stiffness matrix
         k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
-        k12 = rail_pad_complex_stiffness
+        k12 = -rail_pad_complex_stiffness
         k22 = rail_pad_complex_stiffness + (2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper *
                                             self.parameters.alpha) / tan_value - omega**2 * self.parameters.m_sleeper
         k23 = -2 * omega * self.parameters.E_ballast * self.parameters.width_sleeper * self.parameters.alpha / sin_value
@@ -162,8 +163,15 @@ class BallastedTrack(TrackDispersionAbc):
             ValueError: If the solver fails to converge to a solution.
         """
 
-        # Root finding algorithm to find the wavenumber that makes the determinant zero
         for i, om in enumerate(self.omega):
+            # Root finding algorithm to find the wavenumber that makes the determinant zero
+            if (self.__track_stiffness_matrix(self._initial_wave_number, om) *
+                    self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
+                warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
+                              "Please check the initial and end wavenumbers.")
+                self.phase_velocity[i:] = np.nan
+                break
+
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
                                             bracket=[self._initial_wave_number, self._end_wave_number],
@@ -253,6 +261,14 @@ class SlabTrack(TrackDispersionAbc):
 
         # Root finding algorithm to find the wavenumber that makes the determinant zero
         for i, om in enumerate(self.omega):
+            # Root finding algorithm to find the wavenumber that makes the determinant zero
+            if (self.__track_stiffness_matrix(self._initial_wave_number, om) *
+                    self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
+                warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
+                              "Please check the initial and end wavenumbers.")
+                self.phase_velocity[i:] = np.nan
+                break
+
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
                                             args=(om),
                                             bracket=[self._initial_wave_number, self._end_wave_number],

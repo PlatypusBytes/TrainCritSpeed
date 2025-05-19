@@ -70,7 +70,7 @@ class SoilDispersion:
         self.step = step
         # define minimum and maximum values for the phase velocity iterative search
         self.min_c = 0.8 * np.min([layer.c_s for layer in soil_layers])
-        self.max_c = 1.2 * np.max([layer.c_s for layer in soil_layers])
+        self.max_c = 1.4 * np.max([layer.c_s for layer in soil_layers])
 
     def soil_dispersion(self):
         """
