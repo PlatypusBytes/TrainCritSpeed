@@ -168,7 +168,7 @@ class BallastedTrack(TrackDispersionAbc):
             if (self.__track_stiffness_matrix(self._initial_wave_number, om) *
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
-                                 "Please check the initial and end wavenumbers.")
+                              "Please check the initial and end wavenumbers.")
                 self.phase_velocity[i:] = np.nan
                 break
 
@@ -265,7 +265,7 @@ class SlabTrack(TrackDispersionAbc):
             if (self.__track_stiffness_matrix(self._initial_wave_number, om) *
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
-                                 "Please check the initial and end wavenumbers.")
+                              "Please check the initial and end wavenumbers.")
                 self.phase_velocity[i:] = np.nan
                 break
 
