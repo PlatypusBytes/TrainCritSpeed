@@ -109,9 +109,6 @@ class BallastedTrack(TrackDispersionAbc):
         # frequency
         self.frequency = omega / (2 * np.pi)
 
-        # railpad stiffness
-        self.k_rail_pad = self.parameters.k_rail_pad  # + 1j * omega * self.parameters.c_rail_pad
-
         # initial wave number for the root finding algorithm
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
@@ -134,7 +131,7 @@ class BallastedTrack(TrackDispersionAbc):
         sin_value = np.sin(omega * self.parameters.h_ballast / self.parameters.cp) * self.parameters.cp
 
         # railpad complex stiffness
-        rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
+        rail_pad_complex_stiffness = self.parameters.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
 
         # stiffness matrix
         k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
@@ -212,9 +209,6 @@ class SlabTrack(TrackDispersionAbc):
         # frequency
         self.frequency = omega / (2 * np.pi)
 
-        # railpad stiffness
-        self.k_rail_pad = self.parameters.k_rail_pad  # + 1j * omega * self.parameters.c_rail_pad
-
         # initial wave number for the root finding algorithm
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
@@ -234,7 +228,7 @@ class SlabTrack(TrackDispersionAbc):
         """
 
         # railpad complex stiffness
-        rail_pad_complex_stiffness = self.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
+        rail_pad_complex_stiffness = self.parameters.k_rail_pad + 1j * omega * self.parameters.c_rail_pad
 
         # stiffness matrix
         k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
