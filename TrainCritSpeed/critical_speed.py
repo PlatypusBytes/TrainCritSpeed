@@ -80,7 +80,7 @@ class CriticalSpeed:
         all_intersect_y = np.array(intersections_y)
 
         # Get the first intersection point (if any intersections exist)
-        first_intersect_x = all_intersect_x[0] if len(all_intersect_x) > 0 else None
-        first_intersect_y = all_intersect_y[0] if len(all_intersect_y) > 0 else None
+        first_intersect_x = all_intersect_x[0] if len(all_intersect_x) > 0 else []
+        first_intersect_y = all_intersect_y[0] if len(all_intersect_y) > 0 else []
 
         return first_intersect_x, first_intersect_y
