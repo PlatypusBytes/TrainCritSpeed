@@ -48,8 +48,8 @@ class CriticalSpeed:
             y2 (np.ndarray): y-values for the second curve.
 
         Returns:
-            np.ndarray: x-values where the curves intersect.
-            np.ndarray: y-values where the curves intersect.
+            first_intersect_x: x-value of the first intersection point
+            first_intersect_y: y-value of the first intersection point
         """
         # Find where the difference between curves changes sign
         diff = y1 - y2
@@ -75,4 +75,12 @@ class CriticalSpeed:
             intersections_x.append(x_intersect)
             intersections_y.append(y_intersect)
 
-        return np.array(intersections_x), np.array(intersections_y)
+        # Convert lists to numpy arrays
+        all_intersect_x = np.array(intersections_x)
+        all_intersect_y = np.array(intersections_y)
+
+        # Get the first intersection point (if any intersections exist)
+        first_intersect_x = all_intersect_x[0] if len(all_intersect_x) > 0 else np.nan
+        first_intersect_y = all_intersect_y[0] if len(all_intersect_y) > 0 else np.nan
+
+        return first_intersect_x, first_intersect_y

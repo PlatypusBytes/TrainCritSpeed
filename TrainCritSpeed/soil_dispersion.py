@@ -26,7 +26,6 @@ class Layer:
     young_modulus: float
     poisson_ratio: float
     thickness: float
-    shear_modulus: float = np.nan
     c_s: float = np.nan
     c_p: float = np.nan
 
