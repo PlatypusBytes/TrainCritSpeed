@@ -41,7 +41,7 @@ class Layer:
 
 
 class SoilDispersion:
-    """"
+    """
     Compute the dispersion of a soil layer.
 
     It is based on the Fast Delta Matrix method:
@@ -68,8 +68,8 @@ class SoilDispersion:
         self.phase_velocity = np.zeros(len(omegas))
         self.step = step
         # define minimum and maximum values for the phase velocity iterative search
-        self.min_c = 0.8 * np.min([layer.c_s for layer in soil_layers])
-        self.max_c = 1.4 * np.max([layer.c_s for layer in soil_layers])
+        self.min_c = 0.6 * np.min([layer.c_s for layer in soil_layers])
+        self.max_c = 1.6 * np.max([layer.c_s for layer in soil_layers])
 
     def soil_dispersion(self):
         """
@@ -211,7 +211,7 @@ class SoilDispersion:
             tuple: C_alpha, S_alpha, C_beta, S_beta, r, s
         """
 
-        epsilon = 1e-200  # very small number to avoid division by zero
+        epsilon = np.finfo(float).eps  # very small number to avoid division by zero
 
         # P-wave terms
         r = np.where(c < c_p, np.sqrt(1 - (c / c_p)**2), np.where(c == c_p, epsilon, np.sqrt((c / c_p)**2 - 1)))
