@@ -33,9 +33,9 @@ class CriticalSpeed:
         self.track.track_dispersion()
         self.soil.soil_dispersion()
 
-        # intersection between track and soil dispersion curves
+        # intersection between track and soil dispersion curves (fundamental mode)
         self.frequency, self.critical_speed = self.intersection(self.omega, self.track.phase_velocity,
-                                                                self.soil.phase_velocity)
+                                                                self.soil.phase_velocity[:, 0])
 
     @staticmethod
     def intersection(x, y1, y2):
