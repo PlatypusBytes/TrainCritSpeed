@@ -113,7 +113,7 @@ class BallastedTrack(TrackDispersionAbc):
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
-        self.phase_velocity = np.zeros_like(omega)
+        self.phase_velocity = np.full(len(omega), np.nan)
 
     def __track_stiffness_matrix(self, wave_number: float, omega: float):
         """
@@ -166,7 +166,6 @@ class BallastedTrack(TrackDispersionAbc):
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
                               "Please check the initial and end wavenumbers.")
-                self.phase_velocity[i:] = np.nan
                 break
 
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
@@ -213,7 +212,7 @@ class SlabTrack(TrackDispersionAbc):
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
-        self.phase_velocity = np.zeros_like(omega)
+        self.phase_velocity = np.full(len(omega), np.nan)
 
     def __track_stiffness_matrix(self, wave_number: float, omega: float):
         """
@@ -260,7 +259,6 @@ class SlabTrack(TrackDispersionAbc):
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
                               "Please check the initial and end wavenumbers.")
-                self.phase_velocity[i:] = np.nan
                 break
 
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
