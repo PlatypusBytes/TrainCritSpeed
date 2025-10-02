@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 from typing import List, Tuple
+from pathlib import Path
 import warnings
 
 import numpy as np
 import numpy.typing as npt
 from tqdm import tqdm
 from scipy import optimize
+import matplotlib.pyplot as plt
+
 
 np.seterr(invalid='ignore')
 warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -51,13 +54,14 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], step=0.01):
+    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=5, step=0.001):
         """
         Initialize the soil dispersion model.
 
         Args:
             soil_layers (List[Layer]): List of soil layers.
             omegas (np.ndarray): Angular frequencies.
+            nb_modes (int): Number of modes to compute (Optional: default is 1).
             step (float): Step size for the phase velocity search (Optional: default is 0.01).
         """
         for layer in soil_layers:
@@ -65,11 +69,12 @@ class SoilDispersion:
                 raise TypeError("All layers must be of type Layer.")
         self.soil_layers = soil_layers
         self.omega = omegas
-        self.phase_velocity = np.zeros(len(omegas))
+        self.phase_velocity = np.full((len(omegas), nb_modes), np.nan)
+        self.nb_modes = nb_modes
         self.step = step
         # define minimum and maximum values for the phase velocity iterative search
-        self.min_c = 0.6 * np.min([layer.c_s for layer in soil_layers])
-        self.max_c = 1.6 * np.max([layer.c_s for layer in soil_layers])
+        self.min_c = 0.5 * np.min([layer.c_s for layer in soil_layers])
+        self.max_c = np.max([layer.c_s for layer in soil_layers])
 
     def soil_dispersion(self):
         """
@@ -81,28 +86,30 @@ class SoilDispersion:
         c_list = np.arange(self.min_c, self.max_c + self.step, self.step)
 
         for j, omega in enumerate(tqdm(self.omega)):
+            if omega == 0:
+                self.phase_velocity[j, :] = np.nan
+                continue
             # Find the first sign change to bracket the root
             d = self.__compute_dispersion_fastdelta(c_list, omega, self.soil_layers)
-            d_1 = d[0]
 
-            root_interval = None
+            roots = []
             for i in range(len(c_list) - 1):
-                d_2 = d[i + 1]
-                if d_1 * d_2 < 0:  # Sign change detected
+                if d[i] * d[i+1] < 0:  # Sign change detected
                     root_interval = (c_list[i], c_list[i + 1])
-                    break
-                d_1 = d_2
-            if root_interval is None:
-                self.phase_velocity[j] = np.nan
+
+                    # find the root within the bracket root
+                    solution = optimize.root_scalar(self.__compute_dispersion_fastdelta,
+                                                    args=(omega, self.soil_layers),
+                                                    bracket=root_interval,
+                                                    method='brentq')
+                    roots.append(solution.root)
+
+            if not roots:
+                self.phase_velocity[j, :nb_found_modes] = np.nan
                 continue
-
-            # find the root within the bracket root
-            solution = optimize.root_scalar(self.__compute_dispersion_fastdelta,
-                                            args=(omega, self.soil_layers),
-                                            bracket=root_interval,
-                                            method='brentq')
-
-            self.phase_velocity[j] = solution.root
+            else:
+                nb_found_modes = min(len(roots), self.nb_modes)
+                self.phase_velocity[j, :nb_found_modes] = roots[:nb_found_modes]
 
     @staticmethod
     def __compute_dispersion_fastdelta(c: npt.NDArray[np.float64], omega: float,
@@ -211,16 +218,68 @@ class SoilDispersion:
             tuple: C_alpha, S_alpha, C_beta, S_beta, r, s
         """
 
-        epsilon = np.finfo(float).eps  # very small number to avoid division by zero
+        c = np.asarray(c, dtype=np.complex128)
+        k = np.asarray(k, dtype=np.complex128)
 
-        # P-wave terms
-        r = np.where(c < c_p, np.sqrt(1 - (c / c_p)**2), np.where(c == c_p, epsilon, np.sqrt((c / c_p)**2 - 1)))
-        C_alpha = np.where(c <= c_p, np.cosh(k * r * d), np.cos(k * r * d))
-        S_alpha = np.where(c < c_p, np.sinh(k * r * d), 1j * np.sin(k * r * d))
+        r = np.sqrt(1 - (c / c_p) ** 2 + 0j)
+        s = np.sqrt(1 - (c / c_s) ** 2 + 0j)
 
-        # S-wave terms
-        s = np.where(c < c_s, np.sqrt(1 - (c / c_s)**2), np.where(c == c_s, epsilon, np.sqrt((c / c_s)**2 - 1)))
-        C_beta = np.where(c <= c_s, np.cosh(k * s * d), np.cos(k * s * d))
-        S_beta = np.where(c < c_s, np.sinh(k * s * d), 1j * np.sin(k * s * d))
+        C_alpha = np.cosh(k * r * d)
+        S_alpha = np.sinh(k * r * d)
+        C_beta = np.cosh(k * s * d)
+        S_beta = np.sinh(k * s * d)
 
         return C_alpha, S_alpha, C_beta, S_beta, r, s
+
+
+    def soil_dispersion_image(self, c_min: float = None, c_max: float = None, c_step: float = 5.0,
+                              file_name: Path = "./soil_dispersion.png"):
+        """
+        Computes and plots the dispersion function over a 2D grid of frequency vs. phase velocity.
+
+        The resulting image reveals all dispersion modes as dark lines.
+
+        Args:
+            c_min (float, optional): The minimum phase velocity for the search grid.
+                                     Defaults to 0.5 * min(layer_cs).
+            c_max (float, optional): The maximum phase velocity for the search grid.
+                                     Defaults to the half-space shear velocity.
+            c_step (float): The velocity step [m/s] for the grid.
+        """
+
+        # check if critical speed has been computed
+        if np.all(np.isnan(self.phase_velocity)):
+            warnings.warn("Soil dispersion has not been computed yet, therefore the phase velocity will not be plotted."
+            "Run the soil_dispersion() method first if you want to see the phase velocity on the plot.")
+
+        c_list = np.arange(self.min_c, self.max_c + self.step, self.step)
+        frequencies = self.omega / (2 * np.pi)
+
+        # Initialize a matrix to store the determinant values
+        determinant_matrix = np.zeros((len(c_list), len(frequencies)))
+
+        # Compute the determinant for each combination of frequency and phase velocity
+        for j, omega in enumerate(tqdm(self.omega, desc="Frequencies")):
+            if omega == 0:
+                determinant_matrix[:, j] = np.nan
+            d_values = self.__compute_dispersion_fastdelta(c_list, omega, self.soil_layers)
+            determinant_matrix[:, j] = d_values
+
+        # Add a small epsilon to avoid log(0).
+        log_determinant = np.log10(np.abs(determinant_matrix) + np.finfo(float).eps)
+
+        # Create the plot
+        _, ax = plt.subplots(figsize=(10, 6))
+        ax.pcolormesh(
+            frequencies,
+            c_list,
+            log_determinant,
+            shading='auto',
+            cmap='jet_r',
+        )
+        ax.plot(frequencies, self.phase_velocity, 'b', linewidth=1)
+
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Phase Velocity (m/s)")
+        plt.savefig(file_name)
+        plt.close()
