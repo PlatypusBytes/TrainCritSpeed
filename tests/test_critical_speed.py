@@ -6,6 +6,11 @@ from TrainCritSpeed.critical_speed import CriticalSpeed
 
 
 def test_critical_speed():
+    """
+    Test based on the paper of Mezher et al. (2016).
+    Soil test case with three layers and ballasted track.
+    """
+
     omega = np.linspace(0.1, 250, 100)
 
     ballast_parameters = BallastTrackParameters(EI_rail=1.29e7,
@@ -20,10 +25,9 @@ def test_critical_speed():
                                                 rho_ballast=1700)
 
     soil_layers = [
-        Layer(density=1900, young_modulus=2.67e7, poisson_ratio=0.33, thickness=5),
-        Layer(density=1900, young_modulus=1.14e8, poisson_ratio=0.33, thickness=10),
-        Layer(density=1900, young_modulus=2.63e8, poisson_ratio=0.33, thickness=15),
-        Layer(density=1900, young_modulus=4.71e8, poisson_ratio=0.33, thickness=np.inf),
+        Layer(density=2000, young_modulus=30e6, poisson_ratio=0.35, thickness=2),
+        Layer(density=2000, young_modulus=40e6, poisson_ratio=0.35, thickness=4),
+        Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
     ]
 
     ballast = BallastedTrack(ballast_parameters, omega)
@@ -34,5 +38,5 @@ def test_critical_speed():
     assert cs.frequency == 0.0
     cs.compute()
 
-    np.testing.assert_almost_equal(cs.critical_speed, [74.5802565])
-    np.testing.assert_almost_equal(cs.frequency, [57.22559056])
+    np.testing.assert_almost_equal(cs.critical_speed, [78.2246], decimal=4)
+    np.testing.assert_almost_equal(cs.frequency, [63.0056], decimal=4)

@@ -113,9 +113,9 @@ class BallastedTrack(TrackDispersionAbc):
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
-        self.phase_velocity = np.zeros_like(omega)
+        self.phase_velocity = np.full(len(omega), np.nan)
 
-    def __track_stiffness_matrix(self, wave_number: float, omega: float):
+    def __track_stiffness_matrix(self, wave_number: float, omega: float) -> np.float64:
         """
         Calculate the determinant of the stiffness matrix for the given wave number.
 
@@ -124,7 +124,7 @@ class BallastedTrack(TrackDispersionAbc):
             omega (float): Angular frequency
 
         Returns:
-            float: Determinant of the stiffness matrix.
+            np.float64: Determinant of the stiffness matrix.
         """
         # auxiliar values
         tan_value = np.tan(omega * self.parameters.h_ballast / self.parameters.cp) * self.parameters.cp
@@ -147,14 +147,11 @@ class BallastedTrack(TrackDispersionAbc):
             [0, k23, k33],
         ])
 
-        return np.linalg.det(stiffness)
+        return np.linalg.det(stiffness).real  # type: ignore[no-any-return]
 
     def track_dispersion(self):
         """
         Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
-
-        Returns:
-            float: Wave number solution.
 
         Raises:
             ValueError: If the solver fails to converge to a solution.
@@ -166,7 +163,6 @@ class BallastedTrack(TrackDispersionAbc):
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
                               "Please check the initial and end wavenumbers.")
-                self.phase_velocity[i:] = np.nan
                 break
 
             solution = optimize.root_scalar(self.__track_stiffness_matrix,
@@ -213,9 +209,9 @@ class SlabTrack(TrackDispersionAbc):
         self._initial_wave_number = initial_wave_number
         self._end_wave_number = end_wave_number
 
-        self.phase_velocity = np.zeros_like(omega)
+        self.phase_velocity = np.full(len(omega), np.nan)
 
-    def __track_stiffness_matrix(self, wave_number: float, omega: float):
+    def __track_stiffness_matrix(self, wave_number: float, omega: float) -> np.float64:
         """
         Calculate the determinant of the stiffness matrix for the given wave number.
 
@@ -224,7 +220,7 @@ class SlabTrack(TrackDispersionAbc):
             omega (float): Angular frequency
 
         Returns:
-            float: Determinant of the stiffness matrix.
+            np.float64: Determinant of the stiffness matrix.
         """
 
         # railpad complex stiffness
@@ -232,7 +228,7 @@ class SlabTrack(TrackDispersionAbc):
 
         # stiffness matrix
         k11 = self.parameters.EI_rail * wave_number**4 + rail_pad_complex_stiffness - omega**2 * self.parameters.m_rail
-        k12 = rail_pad_complex_stiffness
+        k12 = -rail_pad_complex_stiffness
         k22 = rail_pad_complex_stiffness + self.parameters.EI_slab * wave_number**4 - omega**2 * self.parameters.m_slab + self.parameters.soil_stiffness
 
         stiffness = np.array([
@@ -240,14 +236,11 @@ class SlabTrack(TrackDispersionAbc):
             [k12, k22],
         ])
 
-        return np.linalg.det(stiffness)
+        return np.linalg.det(stiffness).real  # type: ignore[no-any-return]
 
     def track_dispersion(self):
         """
         Find the wavenumber that causes the determinant of the stiffness matrix to be zero.
-
-        Returns:
-            float: Wave number solution.
 
         Raises:
             ValueError: If the solver fails to converge to a solution.
@@ -260,7 +253,6 @@ class SlabTrack(TrackDispersionAbc):
                     self.__track_stiffness_matrix(self._end_wave_number, om) > 0) and (i > 0):
                 warnings.warn(f"Initial and end wavenumbers do not bracket a root for angular frequency {om}\n"
                               "Please check the initial and end wavenumbers.")
-                self.phase_velocity[i:] = np.nan
                 break
 
             solution = optimize.root_scalar(self.__track_stiffness_matrix,

@@ -2,8 +2,10 @@
 
 A Python package for analyzing critical speeds in railway systems, focusing on soil and track dispersion analysis.
 
-The methodology for the computation of the critical train speed is based on the work of [Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239).
-The dispersion curve for the layered soil is based on the Fast Delta Matrix method proposed by [Buchen and Ben-Hador (1996)](https://academic.oup.com/gji/article-lookup/doi/10.1111/j.1365-246X.1996.tb05642.x).
+The methodology for the computation of the critical train speed is based on the work of
+[Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239).
+The dispersion curve for the layered soil is based on the Fast Delta Matrix method proposed by
+[Buchen and Ben-Hador (1996)](https://academic.oup.com/gji/article-lookup/doi/10.1111/j.1365-246X.1996.tb05642.x).
 
 ## Installation
 
@@ -17,7 +19,8 @@ pip install git+https://github.com/PlatypusBytes/TrainCritSpeed
 
 ### Soil Dispersion Analysis
 
-Analyze the dispersion characteristics of a multi-layered soil:
+Analyze the dispersion characteristics of a multi-layered soil (soil profile 3 in
+[Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239)):
 
 ```python
 import numpy as np
@@ -26,27 +29,45 @@ from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 
 # Define soil layers with properties
 soil_layers = [
-    Layer(density=1900, young_modulus=2.67e7, poisson_ratio=0.33, thickness=5),
-    Layer(density=1900, young_modulus=1.14e8, poisson_ratio=0.33, thickness=10),
-    Layer(density=1900, young_modulus=2.63e8, poisson_ratio=0.33, thickness=15),
-    Layer(density=1900, young_modulus=4.71e8, poisson_ratio=0.33, thickness=np.inf),
+    Layer(density=2000, young_modulus=30e6, poisson_ratio=0.35, thickness=2),
+    Layer(density=2000, young_modulus=40e6, poisson_ratio=0.35, thickness=4),
+    Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
 ]
 
+number_modes = 3
+
 # Calculate dispersion across frequency range
-omegas = np.linspace(1, 50 * 2 * np.pi, 100)
-dispersion = SoilDispersion(soil_layers, omegas)
+omegas = np.linspace(1, 80 * 2 * np.pi, 100)
+dispersion = SoilDispersion(soil_layers, omegas, number_modes)
 dispersion.soil_dispersion()
 
 # Plot results
-plt.plot(omegas / 2 / np.pi, dispersion.phase_velocity)
+for mode in range(number_modes):
+    plt.plot(omegas / 2 / np.pi, dispersion.phase_velocity[:, mode], label=f"Mode {mode+1}")
 plt.xlabel('Frequency [Hz]')
-plt.ylabel('Phase velocity [m/s]')
+plt.ylabel('Velocity [m/s]')
+plt.grid()
+plt.xlim(0, 80)
+plt.ylim(0, 160)
+plt.legend()
 plt.show()
 ```
+The result is a plot similar to the following:
+![Soil Velocity](static/soil_velocity.png)
+
+If you want to plot the 2D dispersion image (to reproduce Figure 6a in [Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239)) you can use the following code:
+
+```python
+from pathlib import Path
+
+dispersion.soil_dispersion_image(file_name=Path("soil_dispersion_contour.png"))
+```
+The result is a figure saved in the file_name location, similar to the following:
+![Soil Dispersion Contour](static/soil_dispersion_contour.png)
 
 ### Track Dispersion Analysis
 
-Compare dispersion characteristics of ballasted and slab tracks:
+TrainCritSpeed allows the computation of track dispersion curve for ballasted and slab tracks:
 
 ```python
 from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParameters
@@ -93,16 +114,21 @@ plt.legend()
 plt.show()
 ```
 
+The result is a plot similar to Figure 15a in [Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239):
+
+![Track Dispersion](static/track_dispersion.png)
+
 ### Critical Speed Calculation
 
-Calculate the critical speed on a ballasted track:
+Calculate the critical speed on a ballasted track (same methodology applies for slab tracks):
 
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
+
 from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParameters
 from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
-from TrainCritSpeed.critical_Speed import CriticalSpeed
+from TrainCritSpeed.critical_speed import CriticalSpeed
 
 # Define frequency range
 omega = np.linspace(0.1, 250, 100)
@@ -123,10 +149,9 @@ ballast_parameters = BallastTrackParameters(
 
 # Define soil layers with properties
 soil_layers = [
-    Layer(density=1900, young_modulus=2.67e7, poisson_ratio=0.33, thickness=5),
-    Layer(density=1900, young_modulus=1.14e8, poisson_ratio=0.33, thickness=10),
-    Layer(density=1900, young_modulus=2.63e8, poisson_ratio=0.33, thickness=15),
-    Layer(density=1900, young_modulus=4.71e8, poisson_ratio=0.33, thickness=np.inf),
+    Layer(density=2000, young_modulus=30e6, poisson_ratio=0.35, thickness=2),
+    Layer(density=2000, young_modulus=40e6, poisson_ratio=0.35, thickness=4),
+    Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
 ]
 
 # Calculate dispersion for track and soil
@@ -140,12 +165,19 @@ print(f"Critical speed: {cs.critical_speed} m/s")
 
 # Visualize results
 plt.figure(figsize=(10, 6))
-plt.plot(omega, ballast.phase_velocity, label="Ballast Track")
-plt.plot(omega, dispersion.phase_velocity, label="Soil Layers")
-plt.plot(cs.frequency, cs.critical_speed, "ro", label="Critical Speed")
-plt.xlabel("Angular frequency [rad/s]")
-plt.ylabel("Phase speed [m/s]")
+plt.plot(omega / 2 / np.pi, ballast.phase_velocity, label="Ballast Track")
+plt.plot(omega / 2 / np.pi, dispersion.phase_velocity, label="Soil Layers")
+plt.plot(cs.frequency / 2 / np.pi, cs.critical_speed, "ro", label="Critical Speed")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Velocity [m/s]")
+plt.xlim(0, 40)
+plt.ylim(0, 120)
 plt.grid()
 plt.legend()
 plt.show()
 ```
+
+In this case the critical speed is 78.2 m/s and the plot is similar to Figure 15a in
+[Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239).
+
+[![Critical Speed](static/critical_speed.png)](static/critical_speed.png)
