@@ -38,10 +38,10 @@ dispersion.soil_dispersion_image(file_name=Path("results/soil_dispersion.png"))
 
 # Plot the dispersion curves and critical speed
 plt.figure(figsize=(10, 6))
-plt.plot(omega/ 2 / np.pi, ballast.phase_velocity, label="Ballast Track")
+plt.plot(omega / 2 / np.pi, ballast.phase_velocity, label="Ballast Track")
 for i in range(number_modes):
-    plt.plot(omega/ 2 / np.pi, dispersion.phase_velocity[:, i], label=f"Soil Mode {i+1}")
-plt.plot(cs.frequency/ 2 / np.pi, cs.critical_speed, "ro", label="Critical Speed")
+    plt.plot(omega / 2 / np.pi, dispersion.phase_velocity[:, i], label=f"Soil Mode {i+1}")
+plt.plot(cs.frequency / 2 / np.pi, cs.critical_speed, "ro", label="Critical Speed")
 plt.xlim(0, 60)
 plt.ylim(0, 160)
 plt.xlabel("Frequency [Hz]")
@@ -50,4 +50,3 @@ plt.grid()
 plt.legend()
 plt.savefig("results/critical_speed.png")
 plt.close()
-
