@@ -45,7 +45,7 @@ plt.plot(cs.frequency / 2 / np.pi, cs.critical_speed, "ro", label="Critical Spee
 plt.xlim(0, 60)
 plt.ylim(0, 160)
 plt.xlabel("Frequency [Hz]")
-plt.ylabel("Phase speed [m/s]")
+plt.ylabel("Velocity [m/s]")
 plt.grid()
 plt.legend()
 plt.savefig("results/critical_speed.png")

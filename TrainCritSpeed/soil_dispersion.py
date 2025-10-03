@@ -9,7 +9,6 @@ from tqdm import tqdm
 from scipy import optimize
 import matplotlib.pyplot as plt
 
-
 np.seterr(invalid='ignore')
 warnings.simplefilter("ignore", category=RuntimeWarning)
 
@@ -54,7 +53,7 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=5, step=0.001):
+    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=1, step=0.001):
         """
         Initialize the soil dispersion model.
 
@@ -94,7 +93,7 @@ class SoilDispersion:
 
             roots = []
             for i in range(len(c_list) - 1):
-                if d[i] * d[i+1] < 0:  # Sign change detected
+                if d[i] * d[i + 1] < 0:  # Sign change detected
                     root_interval = (c_list[i], c_list[i + 1])
 
                     # find the root within the bracket root
@@ -104,10 +103,7 @@ class SoilDispersion:
                                                     method='brentq')
                     roots.append(solution.root)
 
-            if not roots:
-                self.phase_velocity[j, :nb_found_modes] = np.nan
-                continue
-            else:
+            if roots:
                 nb_found_modes = min(len(roots), self.nb_modes)
                 self.phase_velocity[j, :nb_found_modes] = roots[:nb_found_modes]
 
@@ -221,8 +217,8 @@ class SoilDispersion:
         c = np.asarray(c, dtype=np.complex128)
         k = np.asarray(k, dtype=np.complex128)
 
-        r = np.sqrt(1 - (c / c_p) ** 2 + 0j)
-        s = np.sqrt(1 - (c / c_s) ** 2 + 0j)
+        r = np.sqrt(1 - (c / c_p)**2 + 0j)
+        s = np.sqrt(1 - (c / c_s)**2 + 0j)
 
         C_alpha = np.cosh(k * r * d)
         S_alpha = np.sinh(k * r * d)
@@ -231,26 +227,24 @@ class SoilDispersion:
 
         return C_alpha, S_alpha, C_beta, S_beta, r, s
 
-
-    def soil_dispersion_image(self, c_min: float = None, c_max: float = None, c_step: float = 5.0,
-                              file_name: Path = "./soil_dispersion.png"):
+    def soil_dispersion_image(self, file_name: Path = Path("soil_dispersion.png")):
         """
         Computes and plots the dispersion function over a 2D grid of frequency vs. phase velocity.
 
         The resulting image reveals all dispersion modes as dark lines.
 
         Args:
-            c_min (float, optional): The minimum phase velocity for the search grid.
-                                     Defaults to 0.5 * min(layer_cs).
-            c_max (float, optional): The maximum phase velocity for the search grid.
-                                     Defaults to the half-space shear velocity.
-            c_step (float): The velocity step [m/s] for the grid.
+            file_name (Path): Path to save the dispersion image (Optional: default is "./soil_dispersion.png").
         """
 
         # check if critical speed has been computed
         if np.all(np.isnan(self.phase_velocity)):
             warnings.warn("Soil dispersion has not been computed yet, therefore the phase velocity will not be plotted."
-            "Run the soil_dispersion() method first if you want to see the phase velocity on the plot.")
+                          "Run the soil_dispersion() method first if you want to see the phase velocity on the plot.")
+
+        # check if folder exists, if not create
+        if not file_name.parent.exists():
+            file_name.parent.mkdir(parents=True, exist_ok=True)
 
         c_list = np.arange(self.min_c, self.max_c + self.step, self.step)
         frequencies = self.omega / (2 * np.pi)
