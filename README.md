@@ -179,3 +179,5 @@ plt.show()
 
 In this case the critical speed is 78.2 m/s and the plot is similar to Figure 15a in
 [Mezher et al. (2016)](https://www.sciencedirect.com/science/article/abs/pii/S2214391215000239).
+
+[![Critical Speed](static/critical_speed.png)](static/critical_speed.png)
