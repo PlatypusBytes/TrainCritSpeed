@@ -1,4 +1,5 @@
-import pytest
+import os
+from pathlib import Path
 import numpy as np
 from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 
@@ -59,9 +60,10 @@ def test_shear_modulus_and_wave_velocities():
     np.testing.assert_almost_equal(layer.c_p, expected_cp)
 
 
-def test_soil_dispersion():
+def test_soil_dispersion_1():
     """
     Test the computation of the soil dispersion.
+
     Test based on the example of: Foti et al. (2014). Surface Wave Methods for Near-Surface Site Characterization.
     CRC Press. pp 94 Fig 2.30
 
@@ -80,9 +82,14 @@ def test_soil_dispersion():
     ]
 
     omegas = np.linspace(1, 50 * 2 * np.pi, 100)
-    dispersion = SoilDispersion(soil_layers, omegas)
+    dispersion = SoilDispersion(soil_layers, omegas, nb_modes=10)
 
     dispersion.soil_dispersion()
+    dispersion.soil_dispersion_image(Path("tests/soil_dispersion.png"))
+
+    # check that the figure has been created
+    assert Path("tests/soil_dispersion.png").is_file()
+    os.remove("tests/soil_dispersion.png")
 
     # Expected values
     with open("./tests/data/soil_dispersion_1.txt", "r") as f:
@@ -90,11 +97,39 @@ def test_soil_dispersion():
     data = [line.split() for line in data]
     data = np.array(data, dtype=float)
 
-    np.testing.assert_almost_equal(dispersion.phase_velocity, data[:, 1], decimal=3)
+    np.testing.assert_almost_equal(dispersion.phase_velocity, data[:, 1:], decimal=3)
     np.testing.assert_almost_equal(omegas, data[:, 0], decimal=3)
 
 
-def compute_elastic_parameters(vs, vp, density=1900):
+def test_soil_dispersion_2():
+    """
+    Test the computation of the soil dispersion.
+
+    Test based on the example of Mezher et al. (2016), Figure 15a.
+
+    """
+
+    soil_layers = [
+        Layer(density=2000, young_modulus=30e6, poisson_ratio=0.35, thickness=2),
+        Layer(density=2000, young_modulus=40e6, poisson_ratio=0.35, thickness=4),
+        Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
+    ]
+
+    omegas = np.linspace(1, 50 * 2 * np.pi, 100)
+    dispersion = SoilDispersion(soil_layers, omegas, nb_modes=1)
+    dispersion.soil_dispersion()
+
+    # Expected values
+    with open("./tests/data/soil_dispersion_2.txt", "r") as f:
+        data = f.read().splitlines()
+    data = [line.split() for line in data]
+    data = np.array(data, dtype=float)
+
+    np.testing.assert_almost_equal(dispersion.phase_velocity, data[:, 1:], decimal=3)
+    np.testing.assert_almost_equal(omegas, data[:, 0], decimal=3)
+
+
+def compute_elastic_parameters(vs: float, vp: float, density: float):
     """
     Compute the elastic parameters of a soil layer.
 
