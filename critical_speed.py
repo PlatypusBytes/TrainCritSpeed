@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -5,7 +6,8 @@ from TrainCritSpeed.track_dispersion import BallastedTrack, BallastTrackParamete
 from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 from TrainCritSpeed.critical_speed import CriticalSpeed
 
-omega = np.linspace(0.1, 500, 100)
+omega = np.linspace(0.1, 400, 100)
+number_modes = 5
 
 ballast_parameters = BallastTrackParameters(EI_rail=1.29e7,
                                             m_rail=120,
@@ -25,19 +27,27 @@ soil_layers = [
 ]
 
 ballast = BallastedTrack(ballast_parameters, omega)
-dispersion = SoilDispersion(soil_layers, omega)
-
+dispersion = SoilDispersion(soil_layers, omega, nb_modes=number_modes)
 cs = CriticalSpeed(omega, ballast, dispersion)
 cs.compute()
 print(f"Critical speed: {cs.critical_speed} m/s")
-print(cs.frequency)
+
+# Optional: plot the 2D dispersion figure
+print(f"Creating 2D dispersion figure")
+dispersion.soil_dispersion_image(file_name=Path("results/soil_dispersion.png"))
+
+# Plot the dispersion curves and critical speed
 plt.figure(figsize=(10, 6))
 plt.plot(omega/ 2 / np.pi, ballast.phase_velocity, label="Ballast Track")
-plt.plot(omega/ 2 / np.pi, dispersion.phase_velocity, label="Soil Layers")
+for i in range(number_modes):
+    plt.plot(omega/ 2 / np.pi, dispersion.phase_velocity[:, i], label=f"Soil Mode {i+1}")
 plt.plot(cs.frequency/ 2 / np.pi, cs.critical_speed, "ro", label="Critical Speed")
+plt.xlim(0, 60)
+plt.ylim(0, 160)
 plt.xlabel("Frequency [Hz]")
 plt.ylabel("Phase speed [m/s]")
 plt.grid()
 plt.legend()
-plt.savefig("aaa.png")
+plt.savefig("results/critical_speed.png")
 plt.close()
+
