@@ -30,7 +30,6 @@ def test_critical_speed():
         Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
     ]
 
-
     ballast = BallastedTrack(ballast_parameters, omega)
     dispersion = SoilDispersion(soil_layers, omega)
 
