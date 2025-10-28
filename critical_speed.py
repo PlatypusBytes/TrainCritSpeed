@@ -7,7 +7,7 @@ from TrainCritSpeed.soil_dispersion import Layer, SoilDispersion
 from TrainCritSpeed.critical_speed import CriticalSpeed
 
 omega = np.linspace(0.1, 400, 100)
-number_modes = 5
+number_modes = 10
 
 ballast_parameters = BallastTrackParameters(EI_rail=1.29e7,
                                             m_rail=120,

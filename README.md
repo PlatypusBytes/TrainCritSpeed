@@ -34,7 +34,7 @@ soil_layers = [
     Layer(density=2000, young_modulus=75e6, poisson_ratio=0.40, thickness=np.inf),
 ]
 
-number_modes = 3
+number_modes = 10
 
 # Calculate dispersion across frequency range
 omegas = np.linspace(1, 80 * 2 * np.pi, 100)
