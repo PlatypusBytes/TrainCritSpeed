@@ -54,7 +54,7 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=1, step=0.01):
+    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=1, step=0.001):
         """
         Initialize the soil dispersion model.
 
@@ -62,7 +62,7 @@ class SoilDispersion:
             soil_layers (List[Layer]): List of soil layers.
             omegas (np.ndarray): Angular frequencies.
             nb_modes (int): Number of modes to compute (Optional: default is 1).
-            step (float): Step size for the phase velocity search (Optional: default is 0.01).
+            step (float): Step size for the phase velocity search (Optional: default is 0.001).
         """
         for layer in soil_layers:
             if not isinstance(layer, Layer):
