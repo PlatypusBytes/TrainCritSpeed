@@ -8,6 +8,7 @@ import numpy.typing as npt
 from tqdm import tqdm
 from scipy import optimize
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 np.seterr(invalid='ignore')
 warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -53,7 +54,7 @@ class SoilDispersion:
     The last layer is always assumed to be a halfspace.
     """
 
-    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=1, step=0.001):
+    def __init__(self, soil_layers: List[Layer], omegas: npt.NDArray[np.float64], nb_modes=1, step=0.01):
         """
         Initialize the soil dispersion model.
 
@@ -121,6 +122,9 @@ class SoilDispersion:
         Returns:
             npt.NDArray[np.float64]: Dispersion value.
         """
+
+        if isinstance(c, float):
+            c = np.array([c])
         wave_number = omega / c  # wavenumber
         num_layers = len(layers)
 
@@ -243,8 +247,7 @@ class SoilDispersion:
                           "Run the soil_dispersion() method first if you want to see the phase velocity on the plot.")
 
         # check if folder exists, if not create
-        if not file_name.parent.exists():
-            file_name.parent.mkdir(parents=True, exist_ok=True)
+        file_name.parent.mkdir(parents=True, exist_ok=True)
 
         c_list = np.arange(self.min_c, self.max_c + self.step, self.step)
         frequencies = self.omega / (2 * np.pi)
@@ -269,8 +272,10 @@ class SoilDispersion:
             c_list,
             log_determinant,
             shading='auto',
-            cmap='jet_r',
-        )
+            cmap='viridis_r',
+            norm=LogNorm(vmin=np.nanmin(log_determinant),
+            vmax=np.nanmax(log_determinant))
+            )
         ax.plot(frequencies, self.phase_velocity, 'b', linewidth=1)
 
         ax.set_xlabel("Frequency (Hz)")
