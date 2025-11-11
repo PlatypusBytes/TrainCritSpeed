@@ -123,8 +123,7 @@ class SoilDispersion:
             npt.NDArray[np.float64]: Dispersion value.
         """
 
-        if isinstance(c, float):
-            c = np.array([c])
+        c = np.array(c)
         wave_number = omega / c  # wavenumber
         num_layers = len(layers)
 
@@ -267,15 +266,12 @@ class SoilDispersion:
 
         # Create the plot
         _, ax = plt.subplots(figsize=(10, 6))
-        ax.pcolormesh(
-            frequencies,
-            c_list,
-            log_determinant,
-            shading='auto',
-            cmap='viridis_r',
-            norm=LogNorm(vmin=np.nanmin(log_determinant),
-            vmax=np.nanmax(log_determinant))
-            )
+        ax.pcolormesh(frequencies,
+                      c_list,
+                      log_determinant,
+                      shading='auto',
+                      cmap='viridis_r',
+                      norm=LogNorm(vmin=np.nanmin(log_determinant), vmax=np.nanmax(log_determinant)))
         ax.plot(frequencies, self.phase_velocity, 'b', linewidth=1)
 
         ax.set_xlabel("Frequency (Hz)")
