@@ -271,8 +271,7 @@ class SoilDispersion:
                       A,
                       shading='auto',
                       cmap='viridis',
-                      norm=LogNorm(vmin=np.nanmin(A), vmax=np.nanmax(A))
-                      )
+                      norm=LogNorm(vmin=np.nanmin(A), vmax=np.nanmax(A)))
         ax.plot(frequencies, self.phase_velocity, 'b', linewidth=1)
 
         ax.set_xlabel("Frequency (Hz)")
