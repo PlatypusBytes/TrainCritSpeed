@@ -261,17 +261,18 @@ class SoilDispersion:
             d_values = self.__compute_dispersion_fastdelta(c_list, omega, self.soil_layers)
             determinant_matrix[:, j] = d_values
 
-        # Add a small epsilon to avoid log(0).
-        log_determinant = np.log10(np.abs(determinant_matrix) + np.finfo(float).eps)
+        A = 1.0 / (1.0 + np.abs(determinant_matrix))
+        A = np.clip(A, np.percentile(A, 10), np.percentile(A, 90))
 
         # Create the plot
         _, ax = plt.subplots(figsize=(10, 6))
         ax.pcolormesh(frequencies,
                       c_list,
-                      log_determinant,
+                      A,
                       shading='auto',
-                      cmap='viridis_r',
-                      norm=LogNorm(vmin=np.nanmin(log_determinant), vmax=np.nanmax(log_determinant)))
+                      cmap='viridis',
+                      norm=LogNorm(vmin=np.nanmin(A), vmax=np.nanmax(A))
+                      )
         ax.plot(frequencies, self.phase_velocity, 'b', linewidth=1)
 
         ax.set_xlabel("Frequency (Hz)")
